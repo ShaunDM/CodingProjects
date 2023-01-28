@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1667684980 source:c:\users\shaun\documents\coding practice\test\main.cpp
+	<iostream>
+	<ctime>
+	<cstdlib>
+
+1670545115 source:c:\users\shaun\documents\coding_practice\test\main.cpp
+	<iostream>
+	<ctime>
+	<cstdlib>
+
+1674172850 source:c:\users\shaun\documents\files\coding_practice\test\main.cpp
+	<iostream>
+	<ctime>
+	<cstdlib>
+
