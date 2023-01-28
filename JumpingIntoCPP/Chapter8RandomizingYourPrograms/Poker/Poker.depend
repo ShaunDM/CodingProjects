@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1668469336 source:c:\users\shaun\documents\coding practice\poker\main.cpp
+	<iostream>
+	<cstdlib>
+	<ctime>
+
+1668725401 source:c:\users\shaun\documents\coding_practice\poker\main.cpp
+	<iostream>
+	<cstdlib>
+	<ctime>
+

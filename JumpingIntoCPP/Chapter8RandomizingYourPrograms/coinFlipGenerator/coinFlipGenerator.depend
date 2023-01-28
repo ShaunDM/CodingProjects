@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1667426727 source:c:\users\shaun\documents\coding practice\coin flip generator\main.cpp
+	<iostream>
+	<ctime>
+	<cstdlib>
+

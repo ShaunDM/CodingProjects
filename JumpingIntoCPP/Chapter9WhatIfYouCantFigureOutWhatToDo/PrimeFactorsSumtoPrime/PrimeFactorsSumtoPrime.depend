@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1669477137 source:c:\users\shaun\documents\coding_practice\primefactorssumtoprime\main.cpp
+	<iostream>
+	<cmath>
+

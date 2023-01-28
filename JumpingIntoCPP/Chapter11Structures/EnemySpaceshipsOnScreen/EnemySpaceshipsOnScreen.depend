@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1671578653 source:c:\users\shaun\documents\files\coding_practice\chapter11structures\enemyspaceshipsonscreen\main.cpp
+	<iostream>
+	<cstdlib>
+	<ctime>
+
