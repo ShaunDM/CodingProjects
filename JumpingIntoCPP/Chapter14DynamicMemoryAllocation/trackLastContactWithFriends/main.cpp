@@ -3,8 +3,21 @@ Creator: Shaun McRae
 Jumping into C++ by Alex Allain
 Chapter 14, Dynamic Memory Allocation
 Problem 4
-Something wrong with favoriting I think
+
+*******************************************************************************
+Improvements
+
+Having two arrays, one for the address book and one for favorites adds a lot of unnecessary complexity. Instead change struct contact.favorites to the element's own position in the array.
+This will remove functions and making the program easier to handle. The only downside is that anytime favorites are accessed the program will have to go through the entire
+address book every time. However, given the size of the average person's address book it might not be a big deal.
+A happy medium might be to create a temporary array for the favorites so that the program only has to go through once and then update the main array once the user is finished.
+Use faves and friends to change the limit of loops.
+
+Possible additional features
+Give the user the ability to set alarms if they haven't contacted one of their contacts in a certain amount of time.
+Add the ability to track birthdays as well and use the alarm to alert them.
 */
+
 
 
 #include <iostream>
@@ -45,9 +58,8 @@ void sortFavorites (int *pArrF, int &faves, struct contact *pArrC, int i);
 void sortAddressBook (struct contact *pArrC, int friends, int *pArrF, int &faves);
 //sorts address book of user by last name, if not available - first name
 int changeFavoriteStatus (int toEdit, int faves, int *pArrF, struct contact *pArrC);//reverses favorite status
-int editFavorite (int toEdit, int *pArrF, int faves, struct contact *pArrC, int friends, int &rSizeFavList, int option);
+int editFavorite (int toEdit, int *pArrF, int &faves, struct contact *pArrC, int friends, int &rSizeFavList, int option);
 //allows user to edit favorite(s) in their favorite list
-int editFavorite (int toEdit, int *pArrF, int faves, struct contact *pArrC, int friends, int &rSizeFavList);
 void addFavorite (int *pArrF, int &faves, int newFav, int &rArraySize); // adds contact to their favorite list
 int addFriend (int friends, struct contact *pArrC, int *pArrF, int &faves, int &rSizeFavList);//adds friend to the addressBook
 int deleteContact (int toDelete, struct contact *pArrC, int friends, int *pArrF, int &faves);
@@ -69,16 +81,16 @@ int main()
     cout << "Keep track of when you last talked with each of your friends using your address book!" << endl;
     cout << "Please enter the information for your first contact." << endl;
     struct contact *pAddressBook = new struct contact [2];
-    int *pFavList = new int [10];
-    int sizeAddressBook = 2, sizeFavList = 10, friends = 0, faves = 0, task, &rSizeAddressBook = sizeAddressBook,
+    int *pFavList = new int [2];
+    int sizeAddressBook = 2, sizeFavList = 2, friends = 0, faves = 0, task, &rSizeAddressBook = sizeAddressBook,
         &rSizeFavList = sizeFavList, toEdit = -2;
-    friends = addFriend(friends, pAddressBook, pFavList, faves, rSizeAddressBook);
     initialize (pAddressBook, sizeAddressBook, friends);
     initialize (pFavList, sizeFavList, faves);
     bool quit = 0;
     while (!quit)
     {
         task = menu ();
+        toEdit = -2;
         switch (task)
         {
         case 0:
@@ -110,11 +122,12 @@ int main()
             {
                 toEdit = printList (pFavList, faves, pAddressBook);
                 friends = editFavorite (toEdit, pFavList, faves, pAddressBook, friends, rSizeFavList, 1);
+                break;
             }
         case 5:
             {
-                toEdit = printList (pFavList, faves, pAddressBook);
-                friends = editFavorite (toEdit, pFavList, faves, pAddressBook, friends, rSizeFavList);
+                friends = editFavorite (toEdit, pFavList, faves, pAddressBook, friends, rSizeFavList, -1);
+                break;
             }
         }
     }
@@ -132,6 +145,7 @@ int menu ()
     cout << "5) Edit favorite's list" << endl;
     cout << "To quit, enter 0" << endl << endl;
     cin >> option;
+    cout << endl;
     option = checkValidity(option, 5, "menu selection");
     return option;
 }
@@ -169,6 +183,7 @@ void swapContact (struct contact *pArrC, int i)
     pArrC[i].time = pArrC[i + 1].time;
     pArrC[i].unitOfTime = pArrC[i + 1].unitOfTime;
     pArrC[i].favorite = pArrC[i + 1].favorite;
+    pArrC[i].isFavorite = pArrC[i + 1].isFavorite;
     pArrC[i+ 1].lastName = tempLast;
     pArrC[i+ 1].firstName = tempFirst;
     pArrC[i+ 1].phone = tempPhone;
@@ -179,7 +194,7 @@ void swapContact (struct contact *pArrC, int i)
     pArrC[i+ 1].time = tempTime;
     pArrC[i+ 1].unitOfTime = tempUnitOfTime;
     pArrC[i+ 1].favorite = tempFav;
-    pArrC[i+ 1].isFavorite= tempIsFav;
+    pArrC[i+ 1].isFavorite = tempIsFav;
 }
 string newInput (string original)
 {
@@ -215,13 +230,14 @@ int checkValidity (int value, int high, string parameter)
 }
 void printContact(int toPrint, struct contact *pArrC)
 {
+    pArrC[toPrint].time = timeSinceLastContact(toPrint, pArrC);
     if (pArrC[toPrint].isFavorite)
         cout << "* ";
     cout << pArrC[toPrint].firstName << " " << pArrC[toPrint].lastName << endl;
     cout << "  " << pArrC[toPrint].phone << endl;
     cout << "  " << pArrC[toPrint].email << endl;
     cout << "  " << "Last contact: " << pArrC[toPrint].month  << "/" << pArrC[toPrint].day  << "/" << pArrC[toPrint].year << endl;
-    cout << "  " << pArrC[toPrint].time << " " << pArrC[toPrint].unitOfTime << "since last contact" << endl << endl;
+    cout << "  " << pArrC[toPrint].time << " " << pArrC[toPrint].unitOfTime << " since last contact" << endl << endl;
 }
 int getDate (int type)
 {// Can use this function to get the current date, but haven't covered it yet, stole from stack overflow
@@ -264,6 +280,30 @@ int timeSinceLastContact(int i, struct contact *pArrC)
         {
         case 1:
             {
+
+            }
+        case 3:
+            {
+
+            }
+        case 5:
+            {
+
+            }
+        case 7:
+            {
+
+            }
+        case 8:
+            {
+
+            }
+        case 10:
+            {
+
+            }
+        case 12:
+            {
                 days = currentDay + 31 - pArrC[i].day;
                 break;
             }
@@ -275,54 +315,21 @@ int timeSinceLastContact(int i, struct contact *pArrC)
                     days = currentDay + 29 - pArrC[i].day;
                 break;
             }
-        case 3:
-            {
-                days = currentDay + 31 - pArrC[i].day;
-                break;
-            }
         case 4:
             {
-                days = currentDay + 30 - pArrC[i].day;
-                break;
-            }
-        case 5:
-            {
-                days = currentDay + 31 - pArrC[i].day;
-                break;
+
             }
         case 6:
             {
-                days = currentDay + 30 - pArrC[i].day;
-                break;
-            }
-        case 7:
-            {
-                days = currentDay + 31 - pArrC[i].day;
-                break;
-            }
-        case 8:
-            {
-                days = currentDay + 31 - pArrC[i].day;
-                break;
+
             }
         case 9:
             {
-                days = currentDay + 30 - pArrC[i].day;
-                break;
-            }
-        case 10:
-            {
-                days = currentDay + 31 - pArrC[i].day;
-                break;
+
             }
         case 11:
             {
                 days = currentDay + 30 - pArrC[i].day;
-                break;
-            }
-        case 12:
-            {
-                days = currentDay + 31 - pArrC[i].day;
                 break;
             }
         }
@@ -358,9 +365,10 @@ void editTimeSinceLastContact(int toEdit, struct contact *pArrC)
     cout << "Please choose an option." << endl;
     cout << "If you'd like to use the current date, enter 1" << endl;
     cout << "To manually enter the date, enter 2" << endl;
-    cout << "To cancel, enter 0 at any time" << endl << endl;
+    cout << "To cancel, enter 0 at any time" << endl;
     int select, tempM, tempD, tempY;
     cin >> select;
+    cout << endl;
     select = checkValidity (select, 2, "option");
     switch (select)
     {
@@ -380,10 +388,9 @@ void editTimeSinceLastContact(int toEdit, struct contact *pArrC)
             cin >> tempM;
             cout << "Day: ";
             cin >> tempD;
-            bool retry = 0;
-
             cout << "Year: ";
             cin >> tempY;
+            cout << endl;
             tempM = checkValidity (tempM, 12, "month");
             if (!tempM)
                 break;
@@ -455,13 +462,14 @@ void editTimeSinceLastContact(int toEdit, struct contact *pArrC)
             }
             if (!tempD)
                 break;
-            tempY = checkValidity(tempY, getDate(2), "year", 1900);
+            tempY = checkValidity(tempY, getDate(2), "year", getDate(2) - 125);
             if (!tempY)
                 break;
             pArrC[toEdit].month = tempM, pArrC[toEdit].day = tempD, pArrC[toEdit].year = tempY;
             break;
         }
     }
+    pArrC[toEdit].time = timeSinceLastContact(toEdit, pArrC);
 }
 void sortFavorites (int *pArrF, int &faves, struct contact *pArrC, int i = -1)
 {//sorts favorites, if favorite is removed for any reason it also adjusts relevant variables such as faves
@@ -489,7 +497,7 @@ void sortFavorites (int *pArrF, int &faves, struct contact *pArrC, int i = -1)
     else
     {
         pArrC[pArrF[i]].isFavorite = 0;
-        for (i; i < faves; i++)
+        for (i; i < faves - 1; i++)
         {
             pArrF[i] = pArrF[i + 1];
             pArrC[pArrF[i]].favorite = i;
@@ -524,9 +532,10 @@ void sortAddressBook (struct contact *pArrC, int friends, int *pArrF, int &faves
                 else if (pArrC[i].firstName < pArrC[i + 1].firstName)
                 {
                     swapContact (pArrC, i);
+                    unsorted = 1;
                 }
             }
-            if (p1compare < p2compare)
+            if (p1compare > p2compare)
             {
                 swapContact (pArrC, i);
                 unsorted = 1;
@@ -538,12 +547,12 @@ void sortAddressBook (struct contact *pArrC, int friends, int *pArrF, int &faves
 int changeFavoriteStatus (int toEdit, int faves, int *pArrF, struct contact *pArrC)
 {//when this function is called need to add 'check selection' to ensure vaild
     char confirm = 'a';
-    if (pArrC[pArrF[toEdit]].isFavorite)
+    if (pArrC[toEdit].isFavorite)
     {
-        while (confirm != 'y'|| confirm != 'n')
+        while (confirm != 'y' && confirm != 'n')
         {
             cout << "Remove " << pArrC[pArrF[toEdit]].firstName << " " << pArrC[pArrF[toEdit]].lastName;
-            cout << "from your favorites list? (y/n): ";
+            cout << " from your favorites list? (y/n): ";
             cin >> confirm;
         }
         if (confirm == 'n')
@@ -551,7 +560,6 @@ int changeFavoriteStatus (int toEdit, int faves, int *pArrF, struct contact *pAr
         pArrC[pArrF[toEdit]].isFavorite = 0;
         pArrC[pArrF[toEdit]].favorite = -1;
         sortFavorites(pArrF, faves, pArrC, toEdit);
-        --faves;
     }
     else
     {
@@ -563,95 +571,49 @@ int changeFavoriteStatus (int toEdit, int faves, int *pArrF, struct contact *pAr
     }
     return faves;
 }
-int editFavorite (int toEdit, int *pArrF, int faves, struct contact *pArrC, int friends, int &rSizeFavList, int option)
+int editFavorite (int toEdit, int *pArrF, int &faves, struct contact *pArrC, int friends, int &rSizeFavList, int option = -1)
 {
+    if (toEdit == -1)
+        return friends;
+    if (option == -1)
+    {
+        toEdit = printList (pArrF, faves, pArrC);
+        if (toEdit == -1)
+            return friends;
+        option = menuFav();
+    }
+    else if (option == -2)
+    {
+        option = menuFav();
+    }
     switch (option)
     {
     case 0:
         {
-            break;
+            return friends;
         }
     case 1://updates date for tracker
         {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                editTimeSinceLastContact (pArrF[toEdit], pArrC);
-                cout << "Enter the number of the next friend to continue to update the tracker." << endl;
-                cout << "To return to the menu, enter 0." << endl;
-                cin >> toEdit;
-                toEdit = checkValidity(toEdit, faves, "favorite");
-                --toEdit;
-            }
+            printContact(pArrF[toEdit], pArrC);
+            editTimeSinceLastContact(pArrF[toEdit], pArrC);
+            printContact(pArrF[toEdit], pArrC);
+            toEdit = printList (pArrF, faves, pArrC);
             break;
         }
     case 2:
         {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList, -1);
-                toEdit = printList (pArrF, faves, pArrC);
-            }
-
+            friends = editContact(pArrF[toEdit], pArrC, friends, pArrF, faves, rSizeFavList, -1);
+            toEdit = printList (pArrF, faves, pArrC);
             break;
         }
     case 3:
         {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList, 6);
-                toEdit = printList (pArrF, faves, pArrC);
-            }
+            friends = editContact(pArrF[toEdit], pArrC, friends, pArrF, faves, rSizeFavList, 6);
+            toEdit = printList (pArrF, faves, pArrC);
+            break;
         }
     }
-    return friends;
-}
-int editFavorite (int toEdit, int *pArrF, int faves, struct contact *pArrC, int friends, int &rSizeFavList)
-{
-    toEdit = printList (pArrF, faves, pArrC);
-    int option = menuFav ();
-    switch (option)
-    {
-    case 0:
-        {
-            break;
-        }
-    case 1://updates date for tracker
-        {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                editTimeSinceLastContact(pArrF[toEdit], pArrC);
-                cout << "Enter the number of the next friend to continue to update the tracker." << endl;
-                cout << "To return to the menu, enter 0." << endl;
-                cin >> toEdit;
-                toEdit = checkValidity(toEdit, faves, "favorite");
-                --toEdit;
-            }
-            break;
-        }
-    case 2:
-        {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList, -1);
-                toEdit = printList (pArrF, faves, pArrC);
-            }
-            break;
-        }
-    case 3:
-        {
-            while (toEdit != -1)
-            {
-                printContact(pArrF[toEdit], pArrC);
-                friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList, 6);
-                toEdit = printList (pArrF, faves, pArrC);
-            }
-        }
-    }
+    friends = editFavorite(toEdit, pArrF, faves, pArrC, friends, rSizeFavList, option = -2);
     return friends;
 }
 void addFavorite (int *pArrF, int &faves, int newFav, int &rArraySize)
@@ -662,7 +624,7 @@ void addFavorite (int *pArrF, int &faves, int newFav, int &rArraySize)
 int addFriend (int friends, struct contact *pArrC, int *pArrF, int &faves, int &rSizeFavList)
 {
     char fav;
-    cout << "New friend's contact information" << endl << endl;
+    cout << "New friend's contact information" << endl;
     cout << "First Name: ";
     cin >> pArrC[friends].firstName;
     cout << "Last Name: ";
@@ -672,6 +634,7 @@ int addFriend (int friends, struct contact *pArrC, int *pArrF, int &faves, int &
     getline (cin, pArrC[friends].phone);
     cout << "Email: ";
     getline (cin, pArrC[friends].email);
+    cout << endl;
     editTimeSinceLastContact (friends, pArrC);
     pArrC[friends].time = timeSinceLastContact(friends, pArrC);
     cout << "Add to favorites list (y/n)" << endl;
@@ -683,23 +646,25 @@ int addFriend (int friends, struct contact *pArrC, int *pArrF, int &faves, int &
         addFavorite (pArrF, faves, friends, rSizeFavList);
     }
     ++friends;
-    if (friends != 1)
-        sortAddressBook(pArrC, friends, pArrF, faves);
+    sortAddressBook(pArrC, friends, pArrF, faves);
+    cout << endl;
     return friends;
 }
 int deleteContact(int toDelete, struct contact *pArrC, int friends, int *pArrF, int &faves)
 {
     char confirm = 'a';
-    while (confirm != 'y' || confirm != 'n')
+    while (confirm != 'y' && confirm != 'n')
     {
       cout << "Delete " << pArrC[toDelete].firstName << " " << pArrC[toDelete].lastName << "? (y/n): ";
       cin >> confirm;
     }
+    if (confirm == 'n')
+        return friends;
     if (pArrC[toDelete].isFavorite)
     {
         sortFavorites(pArrF, faves, pArrC, pArrC[toDelete].favorite);
     }
-    for (int i = toDelete; i < friends; i++)
+    for (int i = toDelete; i < friends - 1; i++)
     {
         pArrC[i].lastName = pArrC[i + 1].lastName;
         pArrC[i].firstName = pArrC[i + 1].firstName;
@@ -723,6 +688,9 @@ int deleteContact(int toDelete, struct contact *pArrC, int friends, int *pArrF, 
 }
 int editContact(int toEdit, struct contact *pArrC, int friends, int *pArrF, int &faves, int &rSizeFavList, int option = -1)// not done
 {
+    bool skip = 0;
+    if (option != -1)
+        skip = 1;
     if (toEdit < 0)
     {
         return friends;
@@ -738,17 +706,18 @@ int editContact(int toEdit, struct contact *pArrC, int friends, int *pArrF, int 
             cout << "2) Last Name: " << pArrC[toEdit].lastName << endl;
             cout << "3) Phone #: " << pArrC[toEdit] .phone << endl;
             cout << "4) Email: " << pArrC[toEdit].email << endl;
-            cout << "5) Date of Last Contact: " << pArrC[toEdit].month << "/" << pArrC[toEdit].day << "/" << pArrC[toEdit].year << endl;
+            cout << "5) Date of Last Contact: " << pArrC[toEdit].month << "/" << pArrC[toEdit].day << "/" << pArrC[toEdit].year;
+            cout << ", " << pArrC[toEdit].time << " " << pArrC[toEdit].unitOfTime << " since last contact." << endl;
             if (!pArrC[toEdit].isFavorite)
                 cout << "6) Favorite" << endl;
             else
                 cout << "6) Unfavorite" << endl;
-            cout << "7) Delete contact" << endl
+            cout << "7) Delete contact" << endl;
             cout << "0) Return" << endl << endl;
-            cout << "Select # ";
+            cout << "Select #";
             cin >> option;
         }
-        option = checkValidity(option, 6, "menu selection", -1);
+        option = checkValidity(option, 7, "menu selection");
         switch (option)
         {
         case 0:
@@ -793,10 +762,10 @@ int editContact(int toEdit, struct contact *pArrC, int friends, int *pArrF, int 
                 }
                 break;
             }
-        case 'd':
+        case 7:
             {
                 friends = deleteContact(toEdit, pArrC, friends, pArrF, faves);
-                break;
+                return friends;
             }
         default:
             {
@@ -807,72 +776,80 @@ int editContact(int toEdit, struct contact *pArrC, int friends, int *pArrF, int 
         cout << endl;
         if (!option)
             break;
+        else if (skip)
+            break;
         else
             option = -1;
     }
-    cout << endl;
+    sortAddressBook(pArrC, friends, pArrF, faves);
     return friends;
 }
 int printList (struct contact *pArrC, int friends)
 {//Prints all friends
     int select;
+    if (!friends)
+    {
+        cout << "No contacts saved in the address book" << endl;
+        return -1;
+    }
     for (int i = 0; i < friends; i++)
     {
-        cout << i + 1 << ") ";
         if (pArrC[i].isFavorite)
-                cout << "* ";
-        if (pArrC[i].lastName != "")
-            cout << pArrC[i].lastName << ", " << pArrC[i].firstName << endl;
-        else
-            cout << i + 1 << ") " << pArrC[i].firstName << endl;
+            cout << "* ";
+        cout << i + 1 << ") ";
+        cout << pArrC[i].firstName << " " << pArrC[i].lastName << endl;
     }
+    cout << endl;
     cout << "To select a friend to update, enter the number next to their name. To return to the menu enter 0 at any time." << endl;
     cin >> select;
-    if (!select)
-        return -1;
+    cout << endl;
     return select - 1;
 }
 int printList (int *pArrF, int faves, struct contact *pArrC)
 {//prints favorites
     int toEdit;
-    char confirm;
+    if (!faves)
+    {
+        cout << "No favorites designated among contacts" << endl;
+        return -1;
+    }
     for (int i = 0; i < faves; i++)
     {
         cout << i + 1 << ") ";
-        if (pArrC[pArrF[i]].lastName != "")
-            cout << pArrC[pArrF[i]].lastName << ", " << pArrC[pArrF[i]].firstName << endl;
-        else
-            cout << i + 1 << ") " << pArrC[pArrF[i]].firstName << endl;
+        cout << pArrC[pArrF[i]].firstName << " " << pArrC[pArrF[i]].lastName << endl;
     }
-    do
-    {
-        cout << "To select a friend to update, enter the number next to their name. To return to the menu enter 0 at any time." << endl;
-        cin >> toEdit;
-        toEdit = checkValidity (toEdit, faves, "favorite");
-        cout << "Confirm " << toEdit << " (y/n)";
-        cin >> confirm;
-    }while (confirm != 'y' && confirm != '0');
-    if (!toEdit || confirm == '0')
-        return -1;
-    return toEdit - 1;
+    cout << endl;
+    cout << "To select a favorite to update, enter the number next to their name. To return to the menu enter 0 at any time." << endl;
+    cin >> toEdit;
+    cout << endl;
+    toEdit = checkValidity (toEdit, faves, "favorite");
+    toEdit--;
+    return toEdit;
 }
 int searchContacts(int friends, struct contact *pArrC, int *pArrF, int &faves, int &rSizeFavList)
 {
     string query;
-    int toEdit;
+    int toEdit = -2;
     cout << "To view all friends search 'all'; to view your favorites search 'favorites'." << endl;
     cout << "Search: ";
     cin.ignore();
     getline(cin, query);
     if (query == "all")
     {
-        toEdit = printList(pArrC, friends);
+        while (toEdit != -1)
+        {
+            toEdit = printList(pArrC, friends);
+            friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList);
+        }
         return friends;
     }
     if (query == "favorites")
     {
-        toEdit = printList (pArrF, faves, pArrC);
-        //fix, need to add the next steps
+        while (toEdit != -1)
+        {
+            toEdit = printList (pArrF, faves, pArrC);
+            friends =  editFavorite (toEdit, pArrF, faves, pArrC, friends, rSizeFavList, -1);
+        }
         return friends;
     }
     int i, matches[friends], match = 0;
@@ -890,12 +867,28 @@ int searchContacts(int friends, struct contact *pArrC, int *pArrF, int &faves, i
         }
         if (match != 0)// need to add additional section to skip this for edit and delete functions)
         {
-            cout << "If you would like to edit a contact from your search results, enter the number next to their name. To return to the menu, enter 0." << endl;
-            cin >> toEdit;
-            toEdit--;
-            toEdit = matches[toEdit];
-            if (toEdit)
+            while (toEdit != -1)
+            {
+                cout << "If you would like to edit a contact from your search results, enter the number next to their name. To return to the menu, enter 0." << endl;
+                cin >> toEdit;
+                toEdit = checkValidity(toEdit, match, "Selection");
+                toEdit--;
+                if (toEdit == -1)
+                    break;
+                toEdit = matches[toEdit];
                 friends = editContact(toEdit, pArrC, friends, pArrF, faves, rSizeFavList);
+                match = 0;
+                for (i = 0; i < friends; i++)
+                {
+                    if (query == pArrC[i].firstName || query == pArrC[i].lastName || query == pArrC[i].phone || query == pArrC[i].email)
+                    {
+                        matches[match] = i;
+                        ++match;
+                        cout << match << ") ";
+                        printContact(i, pArrC);
+                    }
+                }
+            }
         }
         else
         {
@@ -909,8 +902,9 @@ int searchContacts(int friends, struct contact *pArrC, int *pArrF, int &faves, i
                 friends = searchContacts (friends, pArrC, pArrF, faves, rSizeFavList);
                 break;
             }
+            toEdit--;
         }
-    }while (toEdit);
+    }while (toEdit != -1);
     return friends;
 }
 void resetElement (struct contact *pArrC, int toReset)
@@ -924,6 +918,8 @@ void resetElement (struct contact *pArrC, int toReset)
     pArrC[toReset].year = 0;
     pArrC[toReset].time = 0;
     pArrC[toReset].unitOfTime = "";
+    pArrC[toReset].isFavorite = 0;
+    pArrC[toReset].favorite = -1;
 }
 void initialize (int *pArrF, int arraySize, int low)
 {
@@ -954,6 +950,8 @@ struct contact *growArray (int &arraySize, struct contact *pointer)
         newPointer[i].year  = pointer[i].year;
         newPointer[i].time  = pointer[i].time;
         newPointer[i].unitOfTime  = pointer[i].unitOfTime;
+        newPointer[i].isFavorite = pointer[i].isFavorite;
+        newPointer[i].favorite = pointer[i].favorite;
     }
     delete [] pointer;
     pointer = NULL;
