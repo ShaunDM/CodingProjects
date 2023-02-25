@@ -8,7 +8,7 @@ Problem 4
 Improvements
 
 Having two arrays, one for the address book and one for favorites adds a lot of unnecessary complexity. Instead change struct contact.favorites to the element's own position in the array.
-This will remove functions and making the program easier to handle. The only downside is that anytime favorites are accessed the program will have to go through the entire
+This will remove functions and make the program easier to handle. The only downside is that anytime favorites are accessed the program will have to go through the entire
 address book every time. However, given the size of the average person's address book it might not be a big deal.
 A happy medium might be to create a temporary array for the favorites so that the program only has to go through once and then update the main array once the user is finished.
 Use faves and friends to change the limit of loops.
