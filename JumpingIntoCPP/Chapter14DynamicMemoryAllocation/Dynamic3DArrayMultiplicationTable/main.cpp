@@ -49,7 +49,7 @@ intitialize3DArray (int ***table, int a, int b, int c)
 int main()
 {
     int height, width, length, ***pppHeight = NULL;
-    cout << "Welcome to 3D multiplication tbale!" << endl;
+    cout << "Welcome to 3D multiplication table!" << endl;
     cout << "Please enter the dimensions of the table you would like to create." << endl;
     cout << "Height: ";
     cin >> height;

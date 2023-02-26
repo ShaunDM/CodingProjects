@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1677348152 source:c:\users\shaun\documents\files\codingpractice\jumpingintocpp\chapter14dynamicmemoryallocation\tracklastcontactwithfriends\main.cpp
+	<iostream>
+	<string>
+	<ctime>
+	<chrono>
+
