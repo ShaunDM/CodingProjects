@@ -3,11 +3,14 @@
 
 using namespace std;
 
+int winCounter[3] = {0, 0, 0};
+bool oneMoreGame = 1;
+
 void intro (int &height, int &width)
 {
     cout << "Welcome to Connect Four - Flex!" << endl;
     cout << "Connect Four game that allows you to choose the size of the board you wish to play!" << endl << endl;
-     cout << "A minimum of 4 is required to play the game."
+     cout << "A minimum of 4 columns and rows is required to play the game." << endl;
     cout << "Please enter the number of rows you would like your board to have." << endl;
     while (height < 4)
     {
@@ -28,7 +31,7 @@ void clearBoard (char **ppBoard, int height, int width, int *pFillOfColumn)
     {
         for (int j = 0; j < height; j++)
         {
-            ppBoard[i][j] = ' ';
+            ppBoard[i][j] = 'a';
         }
     }
     for (int i = 0; i < width; i++)
@@ -97,28 +100,36 @@ void printBoard (char **ppBoard, int height, int width)
 }
 bool checkValidity (char **ppBoard, int height, int width, int select, int *pFillOfColumn)
 {
-    if (select > width - 1 || select < 0 || pFillOfColumn[select] == height - 1)
+    if (select > width - 1 || select < 0 || pFillOfColumn[select] == height)
     {
         cout << "Invalid selection" << endl << endl;
         return 1;
     }
+    return 0;
 }
 void makeAMove (char **ppBoard, int height, int width, int player, int *pFillOfColumn)
 {
+    bool invalid;
+    int select;
     do
     {
-        int select;
-        bool invalid = 1;
+        invalid = 1;
         cout << "Player " << player << " it is your turn." << endl;
         cout << "Enter the column you would like to place your piece." << endl;
         cout << "Column: ";
         cin >> select;
-        invalid = checkValidity(ppBaord, height, width, select, pFillOfColumn);
+        invalid = checkValidity(ppBoard, height, width, select, pFillOfColumn);
     }while (invalid);
     if (player == 1)
+    {
         ppBoard[select][pFillOfColumn[select]] = 'x';
+        pFillOfColumn[select]++;
+    }
     else
+    {
         ppBoard[select][pFillOfColumn[select]] = '+';
+        pFillOfColumn[select]++;
+    }
 }
 int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfColumn)
 {
@@ -127,9 +138,9 @@ int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfC
     {
         for (int j = 0; j < width; j++)
         {
-            if(ppBoard[j][i] == ppBoard[j][i + 1] && ppBoard[j][i] == ppBoard[j][i + 2] && ppBoard[j][i] == ppBoard[j][i + 3])
+            if(ppBoard[j][i] == ppBoard[j][i + 1] && ppBoard[j][i] == ppBoard[j][i + 2] && ppBoard[j][i] == ppBoard[j][i + 3] && ppBoard[j][i] != 'a')
             {
-                cout << "Congratulations, Player " << player << "Wins!" << endl;
+                cout << "Congratulations, Player " << player << " Wins!" << endl;
                 return player;
             }
         }
@@ -139,9 +150,9 @@ int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfC
     {
         for (int j = 0; j < width - 3; j++)
         {
-            if(ppBoard[j][i] == ppBoard[j + 1][i] && ppBoard[j][i] == ppBoard[j + 2][i] && ppBoard[j][i] == ppBoard[j + 3][i])
+            if(ppBoard[j][i] == ppBoard[j + 1][i] && ppBoard[j][i] == ppBoard[j + 2][i] && ppBoard[j][i] == ppBoard[j + 3][i] && ppBoard[j][i] != 'a')
             {
-                cout << "Congratulations, Player " << player << "Wins!" << endl;
+                cout << "Congratulations, Player " << player << " Wins!" << endl;
                 return player;
             }
         }
@@ -151,9 +162,9 @@ int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfC
     {
         for (int j = 0; j < width - 3; j++)
         {
-            if(ppBoard[j][i] == ppBoard[j + 1][i + 1] && ppBoard[j][i] == ppBoard[j + 2][i + 2] && ppBoard[j][i] == ppBoard[j + 3][i + 3])
+            if(ppBoard[j][i] == ppBoard[j + 1][i + 1] && ppBoard[j][i] == ppBoard[j + 2][i + 2] && ppBoard[j][i] == ppBoard[j + 3][i + 3] && ppBoard[j][i] != 'a')
             {
-                cout << "Congratulations, Player " << player << "Wins!" << endl;
+                cout << "Congratulations, Player " << player << " Wins!" << endl;
                 return player;
             }
         }
@@ -163,9 +174,9 @@ int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfC
     {
         for (int j = 0; j < width - 3; j++)
         {
-            if(ppBoard[j][i] == ppBoard[j + 1][i - 1] && ppBoard[j][i] == ppBoard[j + 2][i - 2] && ppBoard[j][i] == ppBoard[j + 3][i - 3])
+            if(ppBoard[j][i] == ppBoard[j + 1][i - 1] && ppBoard[j][i] == ppBoard[j + 2][i - 2] && ppBoard[j][i] == ppBoard[j + 3][i - 3] && ppBoard[j][i] != 'a')
             {
-                cout << "Congratulations, Player " << player << "Wins!" << endl;
+                cout << "Congratulations, Player " << player << " Wins!" << endl;
                 return player;
             }
         }
@@ -181,26 +192,37 @@ int evaluateWin(char **ppBoard, int height, int width, int player, int *pFillOfC
         return 0;
     return -1;
 }
-int main()
+int main(int winCounter)
 {
     int height = 3, width = 3, turn = 0, player, winner = -1;
     intro (height, width);
-    char **ppBoard = new char* [height];
+    char **ppBoard = new char* [width];
     int *pFillOfColumn = new int [width];
-    for (int i = 0; i < height; i++)
+    for (int i = 0; i < width; i++)
     {
-        ppBoard[i] = new char [width];
+        ppBoard[i] = new char [height];
     }
-    clearBoard (ppBoard, height, width);
+    clearBoard (ppBoard, height, width, pFillOfColumn);
     printBoard (ppBoard, height, width);
-    cout << "Player 1 uses 'x' to mark their space, Player 2 uses '+' to mark their space." << endl << endl;
+    cout << "Player 1 uses 'x' to mark their space, Player 2 uses '+' to mark their space. The game is about to begin." << endl << endl;
     for ( ; ; )
     {
         player = turn % 2 + 1;
-        makeAMove(**ppBoard, height, width, player, *pFillOfColumn);
-        printBoard;
+        makeAMove(ppBoard, height, width, player, pFillOfColumn);
+        printBoard(ppBoard, height, width);
         winner = evaluateWin(ppBoard, height, width, player, pFillOfColumn);
         if (winner >= 0)
+        {
+            winCounter[winner]++;
+            cout << "P1: " << winCounter[1] << endl;
+            cout << "P2: " << winCounter[2] << endl;
+            cout << "Draws: " << winCounter[0] << endl << endl;
+            cout << "To continue enter 1, to quit enter 0." << endl;
+            cout << "Continue?" << endl;
+            cin >> oneMoreGame;
+            if (oneMoreGame)
+                main(winCounter);
+        }
             break;
         turn++;
     }
