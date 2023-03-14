@@ -238,7 +238,14 @@ int main()
             cin >> oneMoreGame;
             cout << endl;
             if (oneMoreGame)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    delete [] ppBoard[i];
+                }
+                delete [] ppBoard;
                 main();
+            }
             break;
         }
         turn++;
